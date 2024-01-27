@@ -21,7 +21,20 @@ namespace Project.Controllers
             var result = await _authService.RegisterAsync(model);
             if (!result.IsAuthenticated)
                 return BadRequest(result.Message);
-            return Ok(result);
+            return Ok(new { token = result.Token, expireson = result.ExpiresOn });
+        }
+        [HttpPost("Login")]
+        public async Task<IActionResult> GetTokenAsync([FromBody] LoginModel model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _authService.LoginAsync(model);
+
+            if (!result.IsAuthenticated)
+                return BadRequest(result.Message);
+
+            return Ok(new { token = result.Token, expireson = result.ExpiresOn });
         }
     }
 }

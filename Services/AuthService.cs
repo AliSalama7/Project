@@ -22,13 +22,12 @@ namespace Project.Services
         public async Task<AuthModel> RegisterAsync(RegisterModel model)
         {
             if (await _userManager.FindByEmailAsync(model.Email) is not null)
-                return new AuthModel { Message = "Email Is Already Registered !" };
-            if (await _userManager.FindByNameAsync(model.UserName) is not null)
-                return new AuthModel { Message = "UserName Is Already Registered !" };
+                return new AuthModel { Message = "Email Is Already Registered !" }; 
             var User = new IdentityUser
             {
-                UserName = model.UserName,
                 Email = model.Email,
+                UserName = model.Email,
+                PhoneNumber = model.phoneNumber
             };
             var result = await _userManager.CreateAsync(User , model.Password);
             if(!result.Succeeded) 
@@ -45,12 +44,33 @@ namespace Project.Services
             return new AuthModel
             {
                 Email = User.Email,
-                ExipersOn = jwtsecuritytoken.ValidTo,
+                PhoneNumber = User.PhoneNumber,
+                ExpiresOn = jwtsecuritytoken.ValidTo,
                 IsAuthenticated = true,
                 Roles = new List<string> { "User"},
                 Token = new JwtSecurityTokenHandler().WriteToken(jwtsecuritytoken),
-                UserName = User.UserName
             };
+        }
+        public async Task<AuthModel> LoginAsync(LoginModel model)
+        {
+            var authModel = new AuthModel();
+
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null || !await _userManager.CheckPasswordAsync(user, model.Password))
+            {
+                authModel.Message = "Email or Password Is Incorrect!";
+                return authModel;
+            }
+            var JwtSecurityToken = await CreateJwtToken(user);
+            var rolesList = await _userManager.GetRolesAsync(user);
+
+            authModel.IsAuthenticated = true;
+            authModel.ExpiresOn = JwtSecurityToken.ValidTo;
+            authModel.Email = user.Email;
+            authModel.Token = new JwtSecurityTokenHandler().WriteToken(JwtSecurityToken);
+            authModel.Roles = rolesList.ToList();
+
+            return authModel;
         }
         private async Task<JwtSecurityToken> CreateJwtToken(IdentityUser user)
         {
