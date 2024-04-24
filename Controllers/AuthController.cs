@@ -11,7 +11,6 @@ namespace Project.Controllers
     public class AuthController : Controller
     {
         private readonly IAuthService _authService;
-
         public AuthController(IAuthService authService)
         {
             _authService = authService;
@@ -35,7 +34,9 @@ namespace Project.Controllers
             var result = await _authService.LoginAsync(model);
             if (!result.IsAuthenticated)
                 return BadRequest(result.Message);
-            return Ok(new { token = result.Token, expireson = result.ExpiresOn });
+            return Ok(new { token = result.Token, expireson = result.ExpiresOn , UserName = result.UserName
+                ,Email = result.Email , PhoneNumber = result.PhoneNumber,ProfilePicture = result.ProfilePictureUrl,
+                Address = result.Address, DateOfBirth = result.DateOfBirth,Roles = result.Roles });
         }
         [HttpGet("Confirm-Email")]
         [ApiExplorerSettings(IgnoreApi = true)]

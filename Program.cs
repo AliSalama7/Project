@@ -16,7 +16,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(
 builder.Services.AddIdentity<ApplicationUser , IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
 builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
-builder.Services.AddTransient<IMailingService, MailingService>();
+builder.Services.AddSingleton<ISensorDataReader>(new SensorDataReader("COM4", 9600));
+builder.Services.Configure<TwilioSettings>(builder.Configuration.GetSection("Twilio"));
+builder.Services.AddTransient<IMailingAndSMSServices, MailingAndSMSServices>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddAuthentication(options =>
 {
@@ -41,6 +43,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddCors();
         builder.Services.AddSwaggerGen();
 builder.Services.Configure<IdentityOptions>(options =>
 {
@@ -55,15 +58,15 @@ builder.Services.Configure<IdentityOptions>(options =>
 var app = builder.Build();
 
         // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
-        {
             app.UseSwagger();
             app.UseSwaggerUI();
-        }
+
 
         app.UseHttpsRedirection();
 
         app.UseAuthentication();
+
+       app.UseCors(c => c.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 
         app.UseAuthorization();
 

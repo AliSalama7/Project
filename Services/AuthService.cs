@@ -17,10 +17,10 @@ namespace Project.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly IMailingService _mailingService;
+        private readonly IMailingAndSMSServices _mailingService;
         private readonly JWT _jwt;
         private static Dictionary<string, string> _randomStringDictionary = new Dictionary<string, string>();
-        public AuthService(UserManager<ApplicationUser> userManager, IOptions<JWT> jwt, IMailingService mailingService
+        public AuthService(UserManager<ApplicationUser> userManager, IOptions<JWT> jwt, IMailingAndSMSServices mailingService
             , RoleManager<IdentityRole> roleManager, SignInManager<ApplicationUser> signInManager)
         {
             _userManager = userManager;
@@ -29,7 +29,6 @@ namespace Project.Services
             _roleManager = roleManager;
             _signInManager = signInManager;
         }
-
         public async Task<AuthModel> RegisterAsync(RegisterModel model)
         {
             if (await _userManager.FindByEmailAsync(model.Email) is not null)
@@ -80,6 +79,11 @@ namespace Project.Services
                 authModel.IsAuthenticated = true;
                 authModel.ExpiresOn = JwtSecurityToken.ValidTo;
                 authModel.Email = user.Email;
+                authModel.UserName = user.UserName;
+                authModel.Address = user.Address;
+                authModel.DateOfBirth = user.DateOfBirth;
+                authModel.ProfilePictureUrl = user.ProfilePictureUrl;
+                authModel.PhoneNumber = user.PhoneNumber;
                 authModel.Token = new JwtSecurityTokenHandler().WriteToken(JwtSecurityToken);
                 authModel.Roles = rolesList.ToList();
             }
@@ -140,7 +144,8 @@ namespace Project.Services
             var User = new ApplicationUser
             {
                 Email = email,
-                UserName = email.Substring(0, email.IndexOf('@'))
+                UserName = email.Substring(0, email.IndexOf('@')),
+                PhoneNumber = "+20 10 25775547"
             };
             var result = await _userManager.CreateAsync(User, email);
             if (!result.Succeeded)
@@ -157,6 +162,7 @@ namespace Project.Services
             await _userManager.ConfirmEmailAsync(User, token);
             var JwtSecurityToken = await CreateJwtToken(User, "register");
             await _mailingService.SendEmailAsync(email, "Invitation For You", $"Your Email : {User.Email} And Your Password : {User.Email}");
+            await _mailingService.SendSMSAsync(User.PhoneNumber, $"Invitation For You , Your Email : {User.Email} And Your Password : {User.Email}");
             return new AuthModel
             {
                 Email = User.Email,
@@ -181,23 +187,24 @@ namespace Project.Services
         }
         public async Task<AuthModel> EditProfileAsync(EditProfileModel model)
         {
-            if (model.UserId == null)
+            if (model.OldEmail == null)
                 return new AuthModel { Message = "User Is Not Correct" };
 
-            var user = await _userManager.FindByIdAsync(model.UserId);
+            var user = await _userManager.FindByEmailAsync(model.OldEmail);
             if (user == null)
-                return new AuthModel { Message = $"Unable to load user with Id : {model.UserId}'." };
+                return new AuthModel { Message = $"Unable to load user with Email : {model.OldEmail}'." };
             user.ProfilePictureUrl = model.ProfilePictureUrl;
+            user.Address = model.Address;
+            user.DateOfBirth = model.DateOfBirth;
             var token = await _userManager.GenerateChangeEmailTokenAsync(user, model.NewEmail);
             var result = await _userManager.ChangeEmailAsync(user, model.NewEmail, token);
             var token1 = await _userManager.GenerateChangePhoneNumberTokenAsync(user, model.PhoneNumber);
             var result1 = await _userManager.ChangePhoneNumberAsync(user, model.PhoneNumber, token1);
             if (!result.Succeeded || !result1.Succeeded)
                 return new AuthModel { Message = "Error changing email." };
-
             if (!string.IsNullOrWhiteSpace(model.UserName))
             {
-                var setUserNameResult = await _userManager.SetUserNameAsync(user, model.UserName);
+                var setUserNameResult = await _userManager.SetUserNameAsync(user , model.UserName);
                 if (!setUserNameResult.Succeeded)
                     return new AuthModel { Message = "Error changing user name." };
             }
@@ -250,7 +257,7 @@ namespace Project.Services
         }
         private string GenerateConfirmationLink(string email)
         {
-            string ConfirmationLink = $"https://localhost:44382/api/auth/confirm-email?email={HttpUtility.UrlEncode(email)}";
+            string ConfirmationLink = $"http://savolto.runasp.net/api/auth/confirm-email?email={HttpUtility.UrlEncode(email)}";
             return ConfirmationLink;
         }
         private static string GenerateRandomString(int length)

@@ -3,16 +3,20 @@ using MailKit.Security;
 using Microsoft.Extensions.Options;
 using MimeKit;
 using Project.Helpers;
+using Twilio;
+using Twilio.Rest.Api.V2010.Account;
 
 namespace Project.Services
 {
-    public class MailingService : IMailingService
+    public class MailingAndSMSServices : IMailingAndSMSServices
     {
         private readonly MailSettings _mailSettings;
+        private readonly TwilioSettings _twilioSettings;
 
-        public MailingService(IOptions<MailSettings> mailSettings)
+        public MailingAndSMSServices(IOptions<MailSettings> mailSettings, IOptions<TwilioSettings> twilioSettings)
         {
             _mailSettings = mailSettings.Value;
+            _twilioSettings = twilioSettings.Value;
         }
 
         public async Task SendEmailAsync(string mailTo, string subject, string body, IList<IFormFile> attachments = null)
@@ -53,6 +57,19 @@ namespace Project.Services
             await smtp.SendAsync(email);
 
             smtp.Disconnect(true);
+        }
+
+        public Task<MessageResource> SendSMSAsync(string mobileNumber, string body)
+        {
+            TwilioClient.Init(_twilioSettings.AccountSID, _twilioSettings.AuthToken);
+
+            var result = MessageResource.CreateAsync(
+                         body : body,
+                         from : new Twilio.Types.PhoneNumber(_twilioSettings.TwilioPhoneNumber),
+                         to : mobileNumber
+                );
+
+            return result;
         }
     }
 }
