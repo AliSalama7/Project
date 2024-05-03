@@ -16,7 +16,6 @@ builder.Services.AddDbContext<ApplicationDbContext>(
 builder.Services.AddIdentity<ApplicationUser , IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
 builder.Services.Configure<MailSettings>(builder.Configuration.GetSection("MailSettings"));
-builder.Services.AddSingleton<ISensorDataReader>(new SensorDataReader("COM4", 9600));
 builder.Services.Configure<TwilioSettings>(builder.Configuration.GetSection("Twilio"));
 builder.Services.AddTransient<IMailingAndSMSServices, MailingAndSMSServices>();
 builder.Services.AddScoped<IAuthService, AuthService>();

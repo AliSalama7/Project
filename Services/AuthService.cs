@@ -114,7 +114,6 @@ namespace Project.Services
                 var result = await _userManager.ResetPasswordAsync(user, token, model.Password);
                 if (result.Succeeded)
                 {
-                    user.Address = string.Empty; 
                     return new AuthModel { Message = "Password Reset Successfully." };
                 }
                 else
@@ -129,7 +128,7 @@ namespace Project.Services
         }
         public async Task<string> AddRoleAsync(AddRoleModel model)
         {
-            var user = await _userManager.FindByIdAsync(model.UserId);
+            var user = await _userManager.FindByEmailAsync(model.Email);
             if (user is null || !await _roleManager.RoleExistsAsync(model.Role))
                 return "Invalid UserId Or Role";
             if (await _userManager.IsInRoleAsync(user, model.Role))
@@ -145,7 +144,6 @@ namespace Project.Services
             {
                 Email = email,
                 UserName = email.Substring(0, email.IndexOf('@')),
-                PhoneNumber = "+20 10 25775547"
             };
             var result = await _userManager.CreateAsync(User, email);
             if (!result.Succeeded)
@@ -162,7 +160,6 @@ namespace Project.Services
             await _userManager.ConfirmEmailAsync(User, token);
             var JwtSecurityToken = await CreateJwtToken(User, "register");
             await _mailingService.SendEmailAsync(email, "Invitation For You", $"Your Email : {User.Email} And Your Password : {User.Email}");
-            await _mailingService.SendSMSAsync(User.PhoneNumber, $"Invitation For You , Your Email : {User.Email} And Your Password : {User.Email}");
             return new AuthModel
             {
                 Email = User.Email,

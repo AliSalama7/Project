@@ -22,7 +22,7 @@ namespace Project.Controllers
                 return BadRequest(ModelState);
             var result = await _authService.RegisterAsync(model);
             if (!result.IsAuthenticated)
-                return BadRequest(result.Message);
+                return Ok(result.Message);
             return Ok("Check Your Email For Confirmation");
         }
 
@@ -49,7 +49,6 @@ namespace Project.Controllers
                 return BadRequest(result.Message);
             return Ok(result.Message);
         }
-        [Authorize(Roles = "Master")]
         [HttpPost("AddRole")]
         public async Task<IActionResult> AddRoleAsync(AddRoleModel model)
         {
@@ -67,9 +66,10 @@ namespace Project.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
             var result = await _authService.SendInvitationAsync(ToEmail);
+            if (!result.IsAuthenticated)
+                return Ok(result.Message);
             return Ok("Invitation Sent Successfully");
         }
-        [Authorize(Roles = "User")]
         [HttpPost("EditProfile")]
         public async Task<IActionResult> EditProfileAsync(EditProfileModel model)
         {

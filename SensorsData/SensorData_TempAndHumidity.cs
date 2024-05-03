@@ -9,7 +9,6 @@ namespace Project.SensorsData
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int SensorID { get; set; }
         public DateTime? Timestamp { get; set; }
-        public double TempValue { get; set; }
-        public double HumidityValue { get; set; }
+        public string? SensorValue { get; set; }
     }
 }

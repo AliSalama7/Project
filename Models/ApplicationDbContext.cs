@@ -14,10 +14,8 @@ namespace Project.Models
         public DbSet<Device> Devices {  get; set; }
         public DbSet<Room> Rooms {  get; set; }
         public DbSet<RoomDevice> RoomDevices { get; set; }
-        public DbSet<SensorData_MotionDetection> MotionData {  get; set; }
-        public DbSet<SensorData_WaterLevel> WaterLevelData {  get; set; }
-        public DbSet<SensorData_EnergyUsage> EnergyUsageData {  get; set; }
-        public DbSet<SensorData_LightDetection> LightData {  get; set; }
+        public DbSet<SensorData_TempAndHumidity> TempAndHumidity {  get; set; }
+ 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             builder.Entity<RoomDevice>()
