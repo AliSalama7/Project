@@ -8,6 +8,7 @@ using System.Text;
 using Project.Models;
 using Project.SensorsData;
 using System.Net.Sockets;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Project.Controllers
 {
@@ -76,5 +77,7 @@ namespace Project.Controllers
             _serialPort.Close();
             return Ok("LED is off");
         }
+       
+
     }
-    }
+}
